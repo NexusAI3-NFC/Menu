@@ -35,10 +35,21 @@
   .menu-title{ text-align:center; margin-bottom:2px; font-size:26px; }
   .menu-sub{ text-align:center; color:var(--slate); font-size:13px; font-family:var(--mono); margin-bottom:20px; }
 
-  .cat-title{ font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--rust); margin:26px 0 12px; }
+  .carta-seccion{ margin-bottom:34px; }
+  .carta-seccion-title{
+    font-family:var(--mono); font-weight:800; font-size:15px; letter-spacing:.03em;
+    padding-bottom:10px; margin-bottom:14px; border-bottom:1.5px solid var(--rust); color:var(--paper);
+  }
+
+  .menu-fijo-header{ background:var(--ink-soft); border:1px solid var(--gold); border-radius:16px; padding:16px 18px; margin-bottom:16px; text-align:center; }
+  .menu-fijo-nombre{ font-family:var(--mono); font-size:13px; color:var(--gold); text-transform:uppercase; letter-spacing:.04em; }
+  .menu-fijo-precio{ font-family:var(--mono); font-weight:800; font-size:26px; margin:4px 0; }
+  .menu-fijo-nota{ font-size:11.5px; color:var(--slate); }
+
+  .cat-title{ font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--rust); margin:22px 0 10px; }
   .cat-title:first-child{ margin-top:0; }
 
-  .plato{ display:flex; justify-content:space-between; gap:14px; padding:15px 4px; border-bottom:1px solid var(--line); }
+  .plato{ display:flex; justify-content:space-between; gap:14px; padding:13px 4px; border-bottom:1px solid var(--line); }
   .plato.no-disp{ opacity:.45; }
   .plato-info{ min-width:0; }
   .plato-nombre{ font-weight:700; font-size:15.5px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
@@ -69,13 +80,15 @@
   }
   .carta-chip.viendo{ border-color:var(--gold); color:var(--paper); }
   .carta-chip .dot-activa{ width:6px; height:6px; border-radius:50%; background:var(--teal); }
-  .carta-chip .ico-horario{ opacity:.6; }
+  .carta-chip .ico-extra{ opacity:.7; font-size:11px; }
   .carta-chip.nueva{ color:var(--gold); border-style:dashed; }
   .carta-bar{
     display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
     background:var(--ink-softer); border-radius:12px; padding:10px 14px; margin-bottom:6px; font-size:12.5px; color:var(--paper-dim);
   }
-  .btn-activar-carta{ font-family:var(--mono); font-size:11.5px; font-weight:700; color:var(--ink); background:var(--teal); padding:8px 13px; border-radius:20px; border:none; }
+  .btn-toggle-carta{ font-family:var(--mono); font-size:11.5px; font-weight:700; padding:8px 13px; border-radius:20px; border:none; }
+  .btn-toggle-carta.mostrar{ color:var(--ink); background:var(--teal); }
+  .btn-toggle-carta.ocultar{ color:var(--paper-dim); background:var(--ink-soft); border:1px solid var(--line); }
   .btn-gestionar-carta{ font-family:var(--mono); font-size:11px; color:var(--slate); text-decoration:underline; background:none; border:none; }
 
   .modal-overlay{ position:fixed; inset:0; background:rgba(20,17,13,.85); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:100; padding:24px; }
@@ -100,6 +113,9 @@
     background:var(--ink); color:var(--paper-dim); font-family:var(--mono); font-size:11.5px; font-weight:700;
   }
   .dia-toggle.on{ background:var(--gold); border-color:var(--gold); color:var(--ink); }
+  .tipo-selector{ display:flex; gap:8px; margin-bottom:14px; }
+  .tipo-opt{ flex:1; padding:12px 8px; border-radius:10px; border:1.5px solid var(--line); background:var(--ink); color:var(--paper-dim); font-size:12.5px; font-weight:600; }
+  .tipo-opt.on{ border-color:var(--rust); background:rgba(198,112,60,0.12); color:var(--paper); }
   .btn{ width:100%; padding:14px; border-radius:12px; font-weight:700; font-size:14.5px; border:none; margin-top:4px; }
   .btn-primary{ background:var(--rust); color:var(--paper); }
   .btn-ghost{ background:none; border:1px solid var(--line); color:var(--paper-dim); margin-top:8px; }
@@ -137,11 +153,9 @@
 </main>
 
 <script>
-  // ⚠️ Esto es un proyecto de Supabase NUEVO Y DISTINTO al de Control NFC.
-  // Pega aquí la URL y la clave publishable del proyecto que creéis para
-  // el Menú Digital — Settings → API dentro de ESE proyecto nuevo.
-  const SUPABASE_URL = 'https://cqocycltfidnberuzmun.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_2sL1kqE6FTwi_KbEtxNDvA_qTDUurza';
+  // ⚠️ Proyecto de Supabase del Menú Digital — Settings → API de ESE proyecto.
+  const SUPABASE_URL = 'https://TU-PROYECTO-MENU.supabase.co';
+  const SUPABASE_ANON_KEY = 'TU-CLAVE-PUBLICA-MENU';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const params = new URLSearchParams(location.search);
@@ -158,9 +172,8 @@
 
   let local = null;
   let CARTAS = [];
-  let cartaActivaId = null;
-  let cartaViendoId = null;
   let PLATOS = [];
+  let cartaViendoId = null;
   let editMode = false;
 
   function showModal(html){
@@ -179,7 +192,7 @@
     }
     document.getElementById('localNombre').textContent = LOCAL_NOMBRE;
 
-    const { data: locales } = await sb.from('locales_menu').select('id, nombre, ultima_carta_programada_id').ilike('nombre', LOCAL_NOMBRE.trim());
+    const { data: locales } = await sb.from('locales_menu').select('id, nombre').ilike('nombre', LOCAL_NOMBRE.trim());
     if (locales && locales.length){
       local = locales[0];
       await cargarCartas();
@@ -201,10 +214,10 @@
     document.getElementById('setupBtn').addEventListener('click', async () => {
       const pin = document.getElementById('setupPin').value.trim();
       if (!/^\d{4}$/.test(pin)) return alert('El PIN debe ser de 4 dígitos');
-      const { data: neg, error } = await sb.from('locales_menu').insert({ nombre: LOCAL_NOMBRE, pin }).select('id, nombre, ultima_carta_programada_id').single();
+      const { data: loc, error } = await sb.from('locales_menu').insert({ nombre: LOCAL_NOMBRE, pin }).select('id, nombre').single();
       if (error){ alert('Error: ' + error.message); return; }
-      await sb.from('cartas').insert({ local_id: neg.id, nombre: 'Principal', activa: true });
-      local = neg;
+      await sb.from('cartas').insert({ local_id: loc.id, nombre: 'Carta', tipo: 'carta', activa: true });
+      local = loc;
       overlay.remove();
       document.getElementById('localSub').textContent = '';
       editMode = true;
@@ -214,43 +227,46 @@
     });
   }
 
-  function cartaProgramadaAhora(){
+  function dentroDeVentana(carta){
+    if (!carta.dias_semana || !carta.dias_semana.length || !carta.hora_inicio || !carta.hora_fin) return null;
     const ahora = new Date();
-    const diaSemana = ahora.getDay();
-    const horaActual = ahora.toTimeString().slice(0,8);
-    return CARTAS.find(c =>
-      c.dias_semana && c.dias_semana.length && c.dias_semana.includes(diaSemana) &&
-      c.hora_inicio && c.hora_fin && horaActual >= c.hora_inicio && horaActual <= c.hora_fin
-    ) || null;
+    const dia = ahora.getDay();
+    const hora = ahora.toTimeString().slice(0,8);
+    return carta.dias_semana.includes(dia) && hora >= carta.hora_inicio && hora <= carta.hora_fin;
   }
 
-  async function comprobarAutoSwitch(){
-    const programada = cartaProgramadaAhora();
-    if (!programada || programada.id === local.ultima_carta_programada_id) return false;
-    await sb.from('cartas').update({ activa: false }).eq('local_id', local.id);
-    await sb.from('cartas').update({ activa: true }).eq('id', programada.id);
-    await sb.from('locales_menu').update({ ultima_carta_programada_id: programada.id }).eq('id', local.id);
-    local.ultima_carta_programada_id = programada.id;
-    return true;
+  async function comprobarAutoSwitchTodas(cartas){
+    let huboCambios = false;
+    for (const c of cartas){
+      const dentro = dentroDeVentana(c);
+      if (dentro === null) continue;
+      if (dentro && !c.ultima_ventana_activa){
+        await sb.from('cartas').update({ activa: true, ultima_ventana_activa: true }).eq('id', c.id);
+        huboCambios = true;
+      } else if (!dentro && c.ultima_ventana_activa){
+        await sb.from('cartas').update({ activa: false, ultima_ventana_activa: false }).eq('id', c.id);
+        huboCambios = true;
+      }
+    }
+    return huboCambios;
   }
 
   async function cargarCartas(){
     const { data } = await sb.from('cartas').select('*').eq('local_id', local.id).order('created_at');
     CARTAS = data || [];
-    const cambio = await comprobarAutoSwitch();
-    if (cambio){
+    const cambios = await comprobarAutoSwitchTodas(CARTAS);
+    if (cambios){
       const { data: data2 } = await sb.from('cartas').select('*').eq('local_id', local.id).order('created_at');
       CARTAS = data2 || [];
     }
-    cartaActivaId = (CARTAS.find(c => c.activa) || CARTAS[0])?.id || null;
-    if (!cartaViendoId || !CARTAS.some(c => c.id === cartaViendoId)) cartaViendoId = cartaActivaId;
+    if (!cartaViendoId || !CARTAS.some(c => c.id === cartaViendoId)) cartaViendoId = CARTAS[0]?.id || null;
     await cargarPlatos();
   }
 
   async function cargarPlatos(){
-    const idAMostrar = editMode ? cartaViendoId : cartaActivaId;
-    if (!idAMostrar){ PLATOS = []; render(); return; }
-    const { data } = await sb.from('platos').select('*').eq('carta_id', idAMostrar).order('categoria').order('orden');
+    const idsCartas = CARTAS.map(c => c.id);
+    if (!idsCartas.length){ PLATOS = []; render(); return; }
+    const { data } = await sb.from('platos').select('*').in('carta_id', idsCartas);
     PLATOS = data || [];
     render();
   }
@@ -259,17 +275,46 @@
     renderCartasPanel();
 
     const content = document.getElementById('menuContent');
-    document.getElementById('addPlatoBtn').classList.toggle('show', editMode);
+    document.getElementById('addPlatoBtn').classList.toggle('show', editMode && !!cartaViendoId);
 
-    if (!PLATOS.length){
-      content.innerHTML = `<div class="empty">${editMode ? 'Esta carta todavía no tiene platos — añade el primero abajo.' : 'La carta se está preparando.'}</div>`;
+    const cartasAMostrar = editMode
+      ? CARTAS.filter(c => c.id === cartaViendoId)
+      : CARTAS.filter(c => c.activa);
+
+    if (!cartasAMostrar.length){
+      content.innerHTML = `<div class="empty">${editMode ? 'Creá una carta arriba para empezar.' : 'La carta se está preparando.'}</div>`;
       return;
     }
 
-    const categorias = [...new Set(PLATOS.map(p => p.categoria))];
-    content.innerHTML = categorias.map(cat => `
+    const mostrarTitulo = !editMode && cartasAMostrar.length > 1;
+    content.innerHTML = cartasAMostrar.map(carta => renderCartaSeccion(carta, mostrarTitulo)).join('');
+
+    if (editMode){
+      content.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => abrirFormPlato(PLATOS.find(p => p.id === btn.dataset.edit))));
+      content.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', () => borrarPlato(btn.dataset.del)));
+    }
+  }
+
+  function renderCartaSeccion(carta, mostrarTitulo){
+    const platosDeCarta = PLATOS.filter(p => p.carta_id === carta.id);
+    const esMenu = carta.tipo === 'menu';
+    const cuerpo = renderPlatosPorCategoria(platosDeCarta, !esMenu);
+    const cabecera = esMenu
+      ? `<div class="menu-fijo-header">
+           <div class="menu-fijo-nombre">${carta.nombre}</div>
+           <div class="menu-fijo-precio">${money(carta.precio_menu)}</div>
+           ${carta.nota_inclusion ? `<div class="menu-fijo-nota">${carta.nota_inclusion}</div>` : ''}
+         </div>`
+      : (mostrarTitulo ? `<div class="carta-seccion-title">${carta.nombre}</div>` : '');
+    return `<div class="carta-seccion">${cabecera}${cuerpo}</div>`;
+  }
+
+  function renderPlatosPorCategoria(platos, conPrecio){
+    if (!platos.length) return editMode ? '<div class="empty">Esta carta todavía no tiene platos.</div>' : '';
+    const categorias = [...new Set(platos.map(p => p.categoria))];
+    return categorias.map(cat => `
       <div class="cat-title">${cat}</div>
-      ${PLATOS.filter(p => p.categoria === cat).map(p => `
+      ${platos.filter(p => p.categoria === cat).map(p => `
         <div class="plato ${!p.disponible ? 'no-disp' : ''}">
           <div class="plato-info">
             <div class="plato-nombre">${p.nombre}
@@ -282,15 +327,10 @@
             <div class="plato-edit-btns">
               <button class="icon-btn" data-edit="${p.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button>
               <button class="icon-btn danger" data-del="${p.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button>
-            </div>` : `<div class="plato-precio">${money(p.precio)}</div>`}
+            </div>` : (conPrecio ? `<div class="plato-precio">${money(p.precio)}</div>` : '')}
         </div>
       `).join('')}
     `).join('');
-
-    if (editMode){
-      content.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => abrirFormPlato(PLATOS.find(p => p.id === btn.dataset.edit))));
-      content.querySelectorAll('[data-del]').forEach(btn => btn.addEventListener('click', () => borrarPlato(btn.dataset.del)));
-    }
   }
 
   function renderCartasPanel(){
@@ -303,12 +343,13 @@
       <button class="carta-chip ${c.id === cartaViendoId ? 'viendo' : ''}" data-carta="${c.id}">
         ${c.activa ? '<span class="dot-activa"></span>' : ''}
         ${c.nombre}
-        ${c.dias_semana && c.dias_semana.length ? '<span class="ico-horario">🕒</span>' : ''}
+        <span class="ico-extra">${c.tipo === 'menu' ? '🍽️' : '📋'}</span>
+        ${c.dias_semana && c.dias_semana.length ? '<span class="ico-extra">🕒</span>' : ''}
       </button>
-    `).join('') + `<button class="carta-chip nueva" id="btnNuevaCarta">+ Nueva carta</button>`;
+    `).join('') + `<button class="carta-chip nueva" id="btnNuevaCarta">+ Nueva</button>`;
 
     row.querySelectorAll('[data-carta]').forEach(btn => {
-      btn.addEventListener('click', () => { cartaViendoId = btn.dataset.carta; cargarPlatos(); });
+      btn.addEventListener('click', () => { cartaViendoId = btn.dataset.carta; render(); });
     });
     document.getElementById('btnNuevaCarta').addEventListener('click', () => abrirFormCarta(null));
 
@@ -316,32 +357,42 @@
     const bar = document.getElementById('cartaBar');
     if (!viendo){ bar.innerHTML = ''; return; }
     const horarioTxt = (viendo.dias_semana && viendo.dias_semana.length)
-      ? `Se activa sola: ${viendo.dias_semana.map(d => DIAS_LABEL[d]).join(' ')} de ${viendo.hora_inicio?.slice(0,5)} a ${viendo.hora_fin?.slice(0,5)}`
-      : 'Sin horario automático — solo se activa a mano';
+      ? ` · se enciende sola: ${viendo.dias_semana.map(d => DIAS_LABEL[d]).join(' ')} ${viendo.hora_inicio?.slice(0,5)}-${viendo.hora_fin?.slice(0,5)}`
+      : '';
     bar.innerHTML = `
-      <span>${viendo.activa ? '✓ Esta carta está activa ahora' : horarioTxt}</span>
+      <span>${viendo.activa ? '✓ Visible para los clientes' : 'Oculta'}${horarioTxt}</span>
       <div style="display:flex; gap:8px;">
-        ${!viendo.activa ? `<button class="btn-activar-carta" id="btnActivarAhora">Activar ahora</button>` : ''}
-        <button class="btn-gestionar-carta" id="btnGestionarCarta">Editar / horario</button>
+        <button class="btn-toggle-carta ${viendo.activa ? 'ocultar' : 'mostrar'}" id="btnToggleActiva">${viendo.activa ? 'Ocultar' : 'Mostrar'}</button>
+        <button class="btn-gestionar-carta" id="btnGestionarCarta">Editar</button>
       </div>`;
-    if (!viendo.activa) document.getElementById('btnActivarAhora').addEventListener('click', () => activarCarta(viendo.id));
+    document.getElementById('btnToggleActiva').addEventListener('click', () => toggleCartaActiva(viendo.id, !viendo.activa));
     document.getElementById('btnGestionarCarta').addEventListener('click', () => abrirFormCarta(viendo));
   }
 
-  async function activarCarta(cartaId){
-    await sb.from('cartas').update({ activa: false }).eq('local_id', local.id);
-    await sb.from('cartas').update({ activa: true }).eq('id', cartaId);
+  async function toggleCartaActiva(cartaId, activar){
+    await sb.from('cartas').update({ activa: activar }).eq('id', cartaId);
     cargarCartas();
   }
 
   function abrirFormCarta(cartaExistente){
     const esNueva = !cartaExistente;
     const diasSel = new Set(cartaExistente?.dias_semana || []);
+    let tipoSel = cartaExistente?.tipo || 'carta';
     const overlay = showModal(`
       <h3>${esNueva ? 'Nueva carta' : 'Editar carta'}</h3>
-      <div class="field"><label>Nombre</label><input id="fcNombre" value="${cartaExistente?.nombre || ''}" placeholder="Ej: Fin de semana"></div>
+      <div class="field"><label>Nombre</label><input id="fcNombre" value="${cartaExistente?.nombre || ''}" placeholder="Ej: Menú del día"></div>
+      <div class="field"><label>Tipo</label>
+        <div class="tipo-selector" id="fcTipoSelector">
+          <button type="button" class="tipo-opt ${tipoSel==='carta'?'on':''}" data-tipo="carta">📋 Carta<br><span style="font-weight:400;opacity:.7;">precio por plato</span></button>
+          <button type="button" class="tipo-opt ${tipoSel==='menu'?'on':''}" data-tipo="menu">🍽️ Menú<br><span style="font-weight:400;opacity:.7;">precio fijo</span></button>
+        </div>
+      </div>
+      <div id="camposMenu" style="display:${tipoSel==='menu'?'block':'none'}">
+        <div class="field"><label>Precio del menú (€)</label><input id="fcPrecioMenu" type="number" step="0.01" value="${cartaExistente?.precio_menu ?? ''}" placeholder="12.50"></div>
+        <div class="field"><label>Qué incluye (opcional)</label><input id="fcNotaInclusion" value="${cartaExistente?.nota_inclusion || ''}" placeholder="Ej: Pan y bebida incluidos"></div>
+      </div>
       ${esNueva ? `<div class="checkbox-row"><input type="checkbox" id="fcDuplicar" ${CARTAS.length ? 'checked' : ''}><label for="fcDuplicar" style="margin:0;">Empezar con los platos de «${CARTAS.find(c=>c.id===cartaViendoId)?.nombre || ''}»</label></div>` : ''}
-      <p style="margin-top:14px;">Horario automático (opcional) — si no marcas ningún día, esta carta solo se activa a mano.</p>
+      <p style="margin-top:10px;">Horario automático (opcional) — si no marcas ningún día, se enciende y apaga siempre a mano.</p>
       <div class="dias-grid" id="fcDias">
         ${DIAS_LABEL.map((l,i) => `<button type="button" class="dia-toggle ${diasSel.has(i)?'on':''}" data-dia="${i}">${l}</button>`).join('')}
       </div>
@@ -354,11 +405,16 @@
       <button class="btn btn-ghost" id="fcCancelar">Cancelar</button>
     `);
     overlay.querySelectorAll('.dia-toggle').forEach(btn => btn.addEventListener('click', () => btn.classList.toggle('on')));
+    overlay.querySelectorAll('.tipo-opt').forEach(btn => btn.addEventListener('click', () => {
+      overlay.querySelectorAll('.tipo-opt').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      tipoSel = btn.dataset.tipo;
+      document.getElementById('camposMenu').style.display = tipoSel === 'menu' ? 'block' : 'none';
+    }));
     document.getElementById('fcCancelar').addEventListener('click', () => overlay.remove());
 
     if (!esNueva){
       document.getElementById('fcBorrar').addEventListener('click', async () => {
-        if (CARTAS.length <= 1) return alert('No puedes borrar la única carta que tenéis.');
         if (!confirm(`¿Eliminar «${cartaExistente.nombre}» y todos sus platos?`)) return;
         await sb.from('cartas').delete().eq('id', cartaExistente.id);
         overlay.remove();
@@ -373,10 +429,13 @@
       const dias = [...overlay.querySelectorAll('.dia-toggle.on')].map(b => Number(b.dataset.dia));
       const horaInicio = document.getElementById('fcHoraInicio').value || null;
       const horaFin = document.getElementById('fcHoraFin').value || null;
+      const precioMenu = tipoSel === 'menu' ? parseFloat(document.getElementById('fcPrecioMenu').value || '0') : null;
+      const notaInclusion = tipoSel === 'menu' ? (document.getElementById('fcNotaInclusion').value.trim() || null) : null;
 
       if (esNueva){
         const { data: nueva, error } = await sb.from('cartas').insert({
-          local_id: local.id, nombre, activa: false,
+          local_id: local.id, nombre, tipo: tipoSel, activa: false,
+          precio_menu: precioMenu, nota_inclusion: notaInclusion,
           dias_semana: dias.length ? dias : null, hora_inicio: horaInicio, hora_fin: horaFin,
         }).select('id').single();
         if (error){ alert('Error: ' + error.message); return; }
@@ -396,7 +455,8 @@
         cargarCartas();
       } else {
         await sb.from('cartas').update({
-          nombre, dias_semana: dias.length ? dias : null, hora_inicio: horaInicio, hora_fin: horaFin,
+          nombre, tipo: tipoSel, precio_menu: precioMenu, nota_inclusion: notaInclusion,
+          dias_semana: dias.length ? dias : null, hora_inicio: horaInicio, hora_fin: horaFin,
         }).eq('id', cartaExistente.id);
         overlay.remove();
         cargarCartas();
@@ -412,7 +472,7 @@
       <div class="field"><label>Categoría</label><input id="fCategoria" value="${plato?.categoria || ''}" placeholder="Ej: Entrantes"></div>
       <div class="field"><label>Nombre</label><input id="fNombre" value="${plato?.nombre || ''}" placeholder="Ej: Ensaladilla rusa"></div>
       <div class="field"><label>Descripción (opcional)</label><textarea id="fDescripcion" placeholder="Ingredientes o detalle corto">${plato?.descripcion || ''}</textarea></div>
-      <div class="field"><label>Precio (€)</label><input id="fPrecio" type="number" step="0.01" value="${plato?.precio ?? ''}" placeholder="0.00"></div>
+      <div class="field"><label>Precio (€) — solo se muestra si la carta es de tipo "Carta"</label><input id="fPrecio" type="number" step="0.01" value="${plato?.precio ?? ''}" placeholder="0.00"></div>
       <div class="field"><label>Etiquetas</label>
         <div class="etiquetas-grid">
           ${ETIQUETAS_DISPONIBLES.map(e => `<label class="etiqueta-check"><input type="checkbox" data-etq="${e.id}" ${etqSel.has(e.id)?'checked':''}> ${e.icon} ${e.label}</label>`).join('')}
@@ -427,13 +487,13 @@
       const categoria = document.getElementById('fCategoria').value.trim() || 'General';
       const nombre = document.getElementById('fNombre').value.trim();
       const descripcion = document.getElementById('fDescripcion').value.trim();
-      const precio = parseFloat(document.getElementById('fPrecio').value);
+      const precio = parseFloat(document.getElementById('fPrecio').value || '0');
       const disponible = document.getElementById('fDisponible').checked;
       const etiquetas = [...overlay.querySelectorAll('[data-etq]:checked')].map(el => el.dataset.etq);
       if (!nombre) return alert('Ponle un nombre al plato');
       if (isNaN(precio) || precio < 0) return alert('Precio no válido');
 
-      const payload = { categoria, nombre, descripcion, precio, disponible, etiquetas, carta_id: cartaViendoId, local_id: local.id };
+      const payload = { categoria, nombre, descripcion, precio, disponible, etiquetas, carta_id: cartaViendoId };
       const { error } = esNuevo
         ? await sb.from('platos').insert(payload)
         : await sb.from('platos').update(payload).eq('id', plato.id);
@@ -462,9 +522,8 @@
     if (!local) return;
     if (editMode){
       editMode = false;
-      cartaViendoId = cartaActivaId;
       updateEditToggle();
-      cargarPlatos();
+      render();
       return;
     }
     const overlay = showModal(`
@@ -480,7 +539,7 @@
       overlay.remove();
       editMode = true;
       updateEditToggle();
-      cargarPlatos();
+      render();
     });
   });
 
