@@ -50,6 +50,8 @@
   .icon-btn{ width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--slate); background:var(--ink-soft); border:1px solid var(--line); }
   .icon-btn svg{ width:14px; height:14px; }
   .icon-btn.abrir{ color:var(--teal); border-color:var(--teal); }
+  .icon-btn.danger{ color:var(--slate); }
+  .icon-btn.danger:active{ color:var(--bad); border-color:var(--bad); }
 
   .empty{ text-align:center; padding:60px 20px; color:var(--slate); font-size:14px; }
 
@@ -86,8 +88,8 @@
 <script>
   // ⚠️ Mismo proyecto de Supabase que menu-digital.html — pega aquí la
   // misma URL y clave publishable que uses allí.
-  const SUPABASE_URL = 'https://cqocycltfidnberuzmun.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_2sL1kqE6FTwi_KbEtxNDvA_qTDUurza';
+  const SUPABASE_URL = 'https://TU-PROYECTO-MENU.supabase.co';
+  const SUPABASE_ANON_KEY = 'TU-CLAVE-PUBLICA-MENU';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let CLIENTES = [];
@@ -144,17 +146,24 @@
             <div class="cliente-nombre">${c.nombre}</div>
             <div class="cliente-meta">Cliente desde ${new Date(c.fecha_alta).toLocaleDateString('es-ES')}</div>
           </div>
+          <button class="icon-btn danger" data-del-cliente="${c.id}" title="Eliminar cliente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          </button>
         </div>
         ${(c.contacto_nombre || c.contacto_telefono) ? `<div class="cliente-contacto">${c.contacto_nombre || ''} ${c.contacto_telefono ? '· ' + c.contacto_telefono : ''}</div>` : ''}
 
         ${localesDeEste.map(l => {
-          const carta = CARTAS.find(ca => ca.local_id === l.id && ca.activa);
-          const nPlatos = carta ? (PLATOS_COUNT[carta.id] || 0) : 0;
+          const cartasDeEste = CARTAS.filter(ca => ca.local_id === l.id);
+          const activas = cartasDeEste.filter(ca => ca.activa);
+          const nPlatos = activas.reduce((s, ca) => s + (PLATOS_COUNT[ca.id] || 0), 0);
+          const resumenCartas = activas.length
+            ? `${activas.length} carta${activas.length>1?'s':''} activa${activas.length>1?'s':''} (${activas.map(a=>a.nombre).join(', ')})`
+            : 'sin cartas activas';
           return `
           <div class="local-row">
             <div class="local-info">
               <div class="nombre">${l.nombre}</div>
-              <div class="sub">PIN ${l.pin} · ${carta ? carta.nombre : 'sin carta'} · ${nPlatos} platos</div>
+              <div class="sub">PIN ${l.pin} · ${resumenCartas} · ${nPlatos} platos</div>
             </div>
             <div class="local-actions">
               <a class="icon-btn abrir" href="menu-digital.html?local=${encodeURIComponent(l.nombre)}" target="_blank" title="Abrir su menú">
@@ -162,6 +171,9 @@
               </a>
               <button class="icon-btn" data-copiar="${l.nombre}" title="Copiar enlace">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 7l1-1a5 5 0 0 0-7-7"/><path d="M14 11a5 5 0 0 0-7-7l-1 1a5 5 0 0 0 7 7"/></svg>
+              </button>
+              <button class="icon-btn danger" data-del-local="${l.id}" data-del-local-nombre="${l.nombre}" title="Eliminar local">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
               </button>
             </div>
           </div>`;
@@ -177,6 +189,27 @@
         const link = `${location.href.replace(/[^/]*$/, '')}menu-digital.html?local=${encodeURIComponent(btn.dataset.copiar)}`;
         const done = () => { btn.innerHTML = '✓'; setTimeout(() => render(), 1200); };
         navigator.clipboard ? navigator.clipboard.writeText(link).then(done) : alert(link);
+      });
+    });
+    lista.querySelectorAll('[data-del-cliente]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const cliente = CLIENTES.find(c => c.id === btn.dataset.delCliente);
+        const nLocales = LOCALES.filter(l => l.cliente_id === cliente.id).length;
+        const aviso = nLocales
+          ? `¿Eliminar «${cliente.nombre}»? Se borran también sus ${nLocales} local(es), con todas sus cartas y platos. No se puede deshacer.`
+          : `¿Eliminar «${cliente.nombre}»? No se puede deshacer.`;
+        if (!confirm(aviso)) return;
+        const { error } = await sb.from('clientes_menu').delete().eq('id', cliente.id);
+        if (error){ alert('Error: ' + error.message); return; }
+        cargarTodo();
+      });
+    });
+    lista.querySelectorAll('[data-del-local]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm(`¿Eliminar el local «${btn.dataset.delLocalNombre}»? Se borran también sus cartas y platos. No se puede deshacer.`)) return;
+        const { error } = await sb.from('locales_menu').delete().eq('id', btn.dataset.delLocal);
+        if (error){ alert('Error: ' + error.message); return; }
+        cargarTodo();
       });
     });
   }
