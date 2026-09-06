@@ -89,7 +89,7 @@
 </main>
 
 <script>
-  // ⚠️ Mismo proyecto de Supabase que menu-digital.html — pega aquí la
+  // ⚠️ Mismo proyecto de Supabase que index.html — pega aquí la
   // misma URL y clave publishable que uses allí.
   const SUPABASE_URL = 'https://cqocycltfidnberuzmun.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_2sL1kqE6FTwi_KbEtxNDvA_qTDUurza';
@@ -169,7 +169,7 @@
               <div class="sub">PIN ${l.pin} · ${resumenCartas} · ${nPlatos} platos</div>
             </div>
             <div class="local-actions">
-              <a class="icon-btn abrir" href="menu-digital.html?local=${encodeURIComponent(l.nombre)}" target="_blank" title="Abrir su menú">
+              <a class="icon-btn abrir" href="index.html?local=${encodeURIComponent(l.nombre)}" target="_blank" title="Abrir su menú">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
               </a>
               <button class="icon-btn" data-copiar="${l.nombre}" title="Copiar enlace">
@@ -189,7 +189,7 @@
     lista.querySelectorAll('[data-add-local]').forEach(btn => btn.addEventListener('click', () => abrirFormLocal(btn.dataset.addLocal)));
     lista.querySelectorAll('[data-copiar]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const link = `${location.href.replace(/[^/]*$/, '')}menu-digital.html?local=${encodeURIComponent(btn.dataset.copiar)}`;
+        const link = `${location.href.replace(/[^/]*$/, '')}index.html?local=${encodeURIComponent(btn.dataset.copiar)}`;
         const done = () => { btn.innerHTML = '✓'; setTimeout(() => render(), 1200); };
         navigator.clipboard ? navigator.clipboard.writeText(link).then(done) : alert(link);
       });
