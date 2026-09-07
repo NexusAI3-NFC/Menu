@@ -8,8 +8,14 @@
 // publiquéis un cambio importante en index.html o panel-menu.html. Es lo
 // que obliga a los móviles/navegadores que ya tenían la PWA instalada a
 // recoger la versión nueva en vez de quedarse con una copia vieja en caché.
+//
+// El fetch de abajo pide siempre { cache: 'no-store' }: así nos aseguramos
+// de que "red primero" habla de verdad con el servidor y no se conforma
+// con una copia guardada en la caché HTTP normal del navegador (que es lo
+// que estaba causando que los cambios tardaran en verse aunque subiéramos
+// de versión aquí).
 
-const CACHE_NAME = 'nexus-menu-v2';
+const CACHE_NAME = 'nexus-menu-v3';
 const APP_SHELL = [
   './index.html',
   './panel-menu.html',
@@ -45,7 +51,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return; // deja pasar Supabase, fuentes, CDN…
 
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-store' })
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(req, copy)).catch(() => {});
