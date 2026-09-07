@@ -53,7 +53,7 @@ border-radius:12px; padding:10px 20px; margin-bottom:14px;
 }
 
 .menu-fijo-header{ background:var(--ink-soft); border:1px solid var(--gold); border-radius:16px; padding:16px 18px; margin-bottom:16px; text-align:center; }
-.menu-fijo-nombre{ font-family:var(--mono); font-size:13px; color:var(--gold); text-transform:uppercase; letter-spacing:.04em; }
+.menu-fijo-nombre{ font-family:var(--mono); font-size:15px; color:var(--gold); text-transform:uppercase; letter-spacing:.04em; }
 .menu-fijo-precio{ font-family:var(--mono); font-weight:800; font-size:26px; margin:4px 0; }
 .menu-fijo-nota{ font-size:11.5px; color:var(--slate); }
 
@@ -230,6 +230,30 @@ if (tema.superficie2) root.setProperty('--ink-softer', tema.superficie2);
 if (tema.acento) root.setProperty('--rust', tema.acento);
 if (tema.texto) root.setProperty('--paper', tema.texto);
 if (tema.texto_dim) root.setProperty('--paper-dim', tema.texto_dim);
+}
+
+// El color de las "tarjetas" (la caja del Menú del día, los chips de carta,
+// los modales…) se calcula siempre a partir del fondo elegido, en vez de
+// quedarse fijo — así, si alguien pone un fondo blanco, esas cajas salen
+// automáticamente en un tono claro (y no se quedan oscuras de antes),
+// y si el fondo es oscuro, salen un poco más claras que él. Esto se usa
+// tanto en la vista previa en vivo como al guardar los colores.
+function hexARgb(hex){
+hex = (hex || '').replace('#', '');
+if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+const num = parseInt(hex, 16) || 0;
+return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+function rgbAHex({ r, g, b }){
+const c = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0');
+return '#' + c(r) + c(g) + c(b);
+}
+function derivarSuperficie(fondoHex, cantidad){
+const rgb = hexARgb(fondoHex);
+const luminancia = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+const esClaro = luminancia > 0.5;
+const delta = esClaro ? -cantidad : cantidad;
+return rgbAHex({ r: rgb.r + delta, g: rgb.g + delta, b: rgb.b + delta });
 }
 
 // Si el local tiene un logo guardado (tema.logo_url), lo mostramos en vez del
@@ -558,11 +582,16 @@ ${TEMAS_PRESET.map((p,i) => `<button type="button" class="preset-swatch" data-i=
 <button class="btn btn-primary" id="btnGuardarTema">Guardar</button>
 <button class="btn btn-ghost" id="btnCancelarTema">Cancelar</button>
 `);
-const previsualizar = () => aplicarTema({
-fondo: document.getElementById('tFondo').value,
+const previsualizar = () => {
+const fondo = document.getElementById('tFondo').value;
+aplicarTema({
+fondo,
+superficie: derivarSuperficie(fondo, 18),
+superficie2: derivarSuperficie(fondo, 30),
 acento: document.getElementById('tAcento').value,
 texto: document.getElementById('tTexto').value,
 });
+};
 overlay.querySelectorAll('.preset-swatch').forEach(sw => sw.addEventListener('click', () => {
 const p = TEMAS_PRESET[sw.dataset.i];
 document.getElementById('tFondo').value = p.fondo;
@@ -573,10 +602,11 @@ previsualizar();
 ['tFondo','tAcento','tTexto'].forEach(id => document.getElementById(id).addEventListener('input', previsualizar));
 document.getElementById('btnCancelarTema').addEventListener('click', () => { aplicarTema(local.tema); overlay.remove(); });
 document.getElementById('btnGuardarTema').addEventListener('click', async () => {
+const fondoElegido = document.getElementById('tFondo').value;
 const nuevoTema = {
-fondo: document.getElementById('tFondo').value,
-superficie: local.tema?.superficie || '#1C1712',
-superficie2: local.tema?.superficie2 || '#241E17',
+fondo: fondoElegido,
+superficie: derivarSuperficie(fondoElegido, 18),
+superficie2: derivarSuperficie(fondoElegido, 30),
 acento: document.getElementById('tAcento').value,
 texto: document.getElementById('tTexto').value,
 texto_dim: local.tema?.texto_dim || '#C9C2B4',
