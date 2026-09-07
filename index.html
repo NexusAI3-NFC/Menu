@@ -46,15 +46,20 @@ main{ max-width:560px; margin:0 auto; padding:22px 20px 70px; }
 .menu-sub{ text-align:center; color:var(--slate); font-size:13px; font-family:var(--mono); margin-bottom:20px; }
 
 .carta-seccion{ margin-bottom:34px; }
+/* Estas dos cajas (Menú del día y el título de las cartas normales) usan un
+color fijo, un poco más claro que el original (#1C1712), en vez de adaptarse
+al fondo del tema — así siempre se ven igual, como antes, y el texto de
+dentro (fijo también, en crema claro) nunca se vuelve ilegible pase lo que
+pase con el color de fondo o de texto que elija el local. */
 .carta-seccion-title{
 display:inline-block; font-family:var(--mono); font-weight:800; font-size:15px; letter-spacing:.04em;
-text-transform:uppercase; color:var(--gold); background:var(--ink-soft); border:1px solid var(--gold);
+text-transform:uppercase; color:var(--gold); background:#28221c; border:1px solid var(--gold);
 border-radius:12px; padding:10px 20px; margin-bottom:14px;
 }
 
-.menu-fijo-header{ background:var(--ink-soft); border:1px solid var(--gold); border-radius:16px; padding:16px 18px; margin-bottom:16px; text-align:center; }
-.menu-fijo-nombre{ font-family:var(--mono); font-size:15px; color:var(--gold); text-transform:uppercase; letter-spacing:.04em; }
-.menu-fijo-precio{ font-family:var(--mono); font-weight:800; font-size:26px; margin:4px 0; }
+.menu-fijo-header{ background:#28221c; border:1px solid var(--gold); border-radius:16px; padding:16px 18px; margin-bottom:16px; text-align:center; }
+.menu-fijo-nombre{ font-family:var(--mono); font-size:13px; color:var(--gold); text-transform:uppercase; letter-spacing:.04em; }
+.menu-fijo-precio{ font-family:var(--mono); font-weight:800; font-size:26px; margin:4px 0; color:#F7F2E7; }
 .menu-fijo-nota{ font-size:11.5px; color:var(--slate); }
 
 .cat-title{ font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--rust); margin:22px 0 10px; }
