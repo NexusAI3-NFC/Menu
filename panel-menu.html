@@ -150,9 +150,14 @@ function render(){
           <div class="cliente-nombre">${c.nombre}</div>
           <div class="cliente-meta">Cliente desde ${new Date(c.fecha_alta).toLocaleDateString('es-ES')}</div>
         </div>
-        <button class="icon-btn danger" data-del-cliente="${c.id}" title="Eliminar cliente">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
-        </button>
+        <div style="display:flex; gap:6px; flex-shrink:0;">
+          <button class="icon-btn editar" data-editar-cliente="${c.id}" title="Modificar cliente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="icon-btn danger" data-del-cliente="${c.id}" title="Eliminar cliente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg>
+          </button>
+        </div>
       </div>
       ${(c.contacto_nombre || c.contacto_telefono) ? `<div class="cliente-contacto">${c.contacto_nombre || ''} ${c.contacto_telefono ? '· ' + c.contacto_telefono : ''}</div>` : ''}
 
@@ -191,6 +196,12 @@ function render(){
   }).join('');
 
   lista.querySelectorAll('[data-add-local]').forEach(btn => btn.addEventListener('click', () => abrirFormLocal(btn.dataset.addLocal)));
+  lista.querySelectorAll('[data-editar-cliente]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cliente = CLIENTES.find(c => c.id === btn.dataset.editarCliente);
+      if (cliente) abrirFormEditarCliente(cliente);
+    });
+  });
   lista.querySelectorAll('[data-editar-local]').forEach(btn => {
     btn.addEventListener('click', () => {
       const local = LOCALES.find(l => l.id === btn.dataset.editarLocal);
@@ -255,6 +266,35 @@ document.getElementById('btnNuevoCliente').addEventListener('click', () => {
     cargarTodo();
   });
 });
+
+// ---------------- modificar cliente ----------------
+// Mismos campos que "Nuevo cliente", pero precargados con los valores
+// actuales y guardando con UPDATE en vez de INSERT.
+function abrirFormEditarCliente(cliente){
+  const overlay = showModal(`
+    <h3>Modificar cliente</h3>
+    <div class="field"><label>Nombre del cliente / empresa</label><input id="ecNombre" value="${cliente.nombre || ''}" placeholder="Ej: Grupo Sabor S.L."></div>
+    <div class="field"><label>Persona de contacto</label><input id="ecContacto" value="${cliente.contacto_nombre || ''}" placeholder="Ej: Ana García"></div>
+    <div class="field"><label>Teléfono</label><input id="ecTelefono" value="${cliente.contacto_telefono || ''}" placeholder="Ej: 600 000 000"></div>
+    <div class="field"><label>Email (opcional)</label><input id="ecEmail" value="${cliente.contacto_email || ''}" placeholder="Ej: ana@saborsl.com"></div>
+    <button class="btn btn-primary" id="ecGuardar">Guardar cambios</button>
+    <button class="btn btn-ghost" id="ecCancelar">Cancelar</button>
+  `);
+  document.getElementById('ecCancelar').addEventListener('click', () => overlay.remove());
+  document.getElementById('ecGuardar').addEventListener('click', async () => {
+    const nombre = document.getElementById('ecNombre').value.trim();
+    if (!nombre) return alert('Ponle un nombre al cliente');
+    const { error } = await sb.from('clientes_menu').update({
+      nombre,
+      contacto_nombre: document.getElementById('ecContacto').value.trim() || null,
+      contacto_telefono: document.getElementById('ecTelefono').value.trim() || null,
+      contacto_email: document.getElementById('ecEmail').value.trim() || null,
+    }).eq('id', cliente.id);
+    if (error){ alert('Error: ' + error.message); return; }
+    overlay.remove();
+    cargarTodo();
+  });
+}
 
 // ---------------- nuevo local ----------------
 function abrirFormLocal(clienteId){
