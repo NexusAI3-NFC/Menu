@@ -297,9 +297,13 @@ const content = document.getElementById('menuContent');
 document.getElementById('addPlatoBtn').classList.toggle('show', editMode && !!cartaViendoId);
 document.getElementById('editToolbar').classList.toggle('show', editMode);
 
-const cartasAMostrar = editMode
+// El "Menú del día" (tipo=menu, precio fijo) siempre se muestra antes que
+// las cartas normales (tipo=carta), sea cual sea el orden en que se crearon.
+const puntuacionTipo = c => c.tipo === 'menu' ? 0 : 1;
+const cartasAMostrar = (editMode
 ? CARTAS.filter(c => c.id === cartaViendoId)
-: CARTAS.filter(c => c.activa);
+: CARTAS.filter(c => c.activa)
+).sort((a, b) => puntuacionTipo(a) - puntuacionTipo(b));
 
 if (!cartasAMostrar.length){
 content.innerHTML = `<div class="empty">${editMode ? 'Creá una carta arriba para empezar.' : 'La carta se está preparando.'}</div>`;
