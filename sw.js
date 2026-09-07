@@ -3,8 +3,13 @@
 // página siga abriendo sin conexión. Las llamadas a Supabase, Google Fonts
 // y el CDN de la librería van directas a la red: nunca se interceptan ni
 // se guardan aquí, así los datos del menú siempre son los reales.
+//
+// IMPORTANTE: sube de versión CACHE_NAME (v1 -> v2 -> v3...) cada vez que
+// publiquéis un cambio importante en index.html o panel-menu.html. Es lo
+// que obliga a los móviles/navegadores que ya tenían la PWA instalada a
+// recoger la versión nueva en vez de quedarse con una copia vieja en caché.
 
-const CACHE_NAME = 'nexus-menu-v1';
+const CACHE_NAME = 'nexus-menu-v2';
 const APP_SHELL = [
   './index.html',
   './panel-menu.html',
