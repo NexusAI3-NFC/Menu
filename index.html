@@ -259,11 +259,19 @@ let PLATOS = [];
 let cartaViendoId = null;
 let editMode = false;
 
-// Tiempo mínimo (ms) que se ve la pantalla de bienvenida, para que el vídeo
-// de animación termine de reproducirse aunque el menú cargue muy rápido.
-const SPLASH_MIN_MS = 1400;
+// Margen mínimo (ms) para evitar un parpadeo si el vídeo y los datos están
+// listos casi a la vez. La pantalla de bienvenida ahora se quita en cuanto
+// termina el vídeo Y el menú ya ha cargado (lo que tarde más de los dos),
+// así que su duración sigue de verdad la del vídeo en vez de un tiempo fijo.
+const SPLASH_MIN_MS = 150;
 const splashStart = Date.now();
 document.body.classList.add('splash-lock');
+
+let splashVideoListo = false;
+let splashDatosListos = false;
+function comprobarSplashListo(){
+if (splashVideoListo && splashDatosListos) ocultarSplash();
+}
 
 function ocultarSplash(){
 const splash = document.getElementById('splash');
@@ -276,6 +284,12 @@ document.body.classList.remove('splash-lock');
 setTimeout(() => splash.remove(), 550);
 }, esperar);
 }
+
+const splashVideoEl = document.getElementById('splashVideo');
+splashVideoEl.addEventListener('ended', () => { splashVideoListo = true; comprobarSplashListo(); });
+// Si el vídeo no puede reproducirse por lo que sea, no bloqueamos el menú por eso.
+splashVideoEl.addEventListener('error', () => { splashVideoListo = true; comprobarSplashListo(); });
+
 // Salvaguarda: si algo tarda demasiado (sin conexión, Supabase caído...) el
 // splash se quita igualmente para no dejar al cliente mirando una pantalla negra.
 setTimeout(ocultarSplash, 4000);
@@ -738,7 +752,7 @@ window.addEventListener('online', actualizarBannerConexion);
 window.addEventListener('offline', actualizarBannerConexion);
 actualizarBannerConexion();
 
-init();
+init().finally(() => { splashDatosListos = true; comprobarSplashListo(); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
 </body>
