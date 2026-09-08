@@ -211,7 +211,23 @@ const SUPABASE_ANON_KEY = 'sb_publishable_2sL1kqE6FTwi_KbEtxNDvA_qTDUurza';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const params = new URLSearchParams(location.search);
-const LOCAL_NOMBRE = (params.get('local') || '').trim();
+// Algunas apps para programar tarjetas NFC codifican la URL dos veces (por
+// ejemplo, el espacio de "Sin Más" acaba como "%2520" en vez de "%20"). El
+// navegador ya deshace una capa al leer el parámetro; aquí deshacemos una
+// capa extra si todavía queda algo sin decodificar, para que la tarjeta NFC
+// funcione igual que abrir el enlace normal a mano.
+function normalizarParametroLocal(valor){
+let actual = valor;
+for (let i = 0; i < 3 && /%[0-9A-Fa-f]{2}/.test(actual); i++){
+try {
+const siguiente = decodeURIComponent(actual);
+if (siguiente === actual) break;
+actual = siguiente;
+} catch { break; }
+}
+return actual;
+}
+const LOCAL_NOMBRE = normalizarParametroLocal((params.get('local') || '').trim());
 const money = n => (Number(n)||0).toLocaleString('es-ES', {style:'currency', currency:'EUR'});
 const DIAS_LABEL = ['D','L','M','X','J','V','S'];
 
