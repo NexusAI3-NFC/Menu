@@ -25,9 +25,8 @@ a{color:inherit;} button{font:inherit; cursor:pointer;}
 h1,h2{font-family:var(--mono); font-weight:800;}
 
 header{ position:sticky; top:0; z-index:20; background:rgba(20,17,13,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); padding:16px 20px; display:flex; align-items:center; justify-content:space-between; }
-.brand{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-weight:800; font-size:14px; color:var(--slate); cursor:pointer; -webkit-tap-highlight-color:transparent; transition:color .2s; }
+.brand{ display:flex; align-items:center; gap:8px; font-family:var(--mono); font-weight:800; font-size:14px; color:var(--slate); }
 .brand svg{ width:20px; height:20px; }
-.brand.editing{ color:var(--gold); }
 .edit-toggle{
 display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; font-weight:700;
 padding:8px 14px; border-radius:20px; border:1px solid var(--line); background:var(--ink-soft); color:var(--paper-dim);
@@ -42,8 +41,13 @@ font-size:12.5px; font-weight:700; padding:9px 16px;
 .offline-banner.show{ display:block; }
 
 main{ max-width:560px; margin:0 auto; padding:22px 20px 70px; }
-.menu-title{ text-align:center; margin-bottom:2px; font-size:26px; }
-.menu-logo{ display:block; max-width:230px; width:100%; height:auto; margin:0 auto; }
+/* El logo/nombre del local es el punto para entrar en modo edición (con el
+PIN) — cursor:pointer y un pequeño halo dorado cuando el modo edición está
+activo, tanto si se muestra como imagen (logo subido) como si es solo texto. */
+.menu-title{ text-align:center; margin-bottom:2px; font-size:26px; cursor:pointer; -webkit-tap-highlight-color:transparent; transition:color .2s; border-radius:14px; }
+.menu-title.editing{ color:var(--gold); }
+.menu-logo{ display:block; max-width:230px; width:100%; height:auto; margin:0 auto; border-radius:10px; transition:box-shadow .2s; }
+.menu-title.editing .menu-logo{ box-shadow:0 0 0 3px var(--gold); }
 .menu-sub{ text-align:center; color:var(--slate); font-size:13px; font-family:var(--mono); margin-bottom:20px; }
 
 .carta-seccion{ margin-bottom:34px; }
@@ -180,7 +184,7 @@ body.splash-lock{ overflow:hidden; }
 </div>
 
 <header>
-<div class="brand" id="brandLogo">
+<div class="brand">
 <svg viewBox="0 0 400 400"><rect width="400" height="400" rx="72" fill="#14110D"/><line x1="108" y1="108" x2="292" y2="292" stroke="#C6703C" stroke-width="42" stroke-linecap="round"/><line x1="292" y1="108" x2="108" y2="292" stroke="#C6703C" stroke-width="42" stroke-linecap="round"/><circle cx="108" cy="108" r="27" fill="#C6703C"/><circle cx="292" cy="108" r="27" fill="#C6703C"/><circle cx="108" cy="292" r="27" fill="#C6703C"/><circle cx="292" cy="292" r="27" fill="#C6703C"/><circle cx="200" cy="200" r="33" fill="#C6703C"/></svg>
 nexus · menú digital
 </div>
@@ -684,15 +688,16 @@ overlay.remove();
 });
 });
 
-// Ya no hay un botón "Editar" visible — el logo/marca de arriba a la
-// izquierda hace de gatillo: al tocarlo pide el PIN del local (o, si ya
-// estás editando, sale del modo edición). Solo cambia de color como pista
-// de que se puede tocar y de que el modo edición está activo.
+// Ya no hay un botón "Editar" visible — el logo/nombre del local (el título
+// grande, "#localNombre") hace de gatillo: al tocarlo pide el PIN del local
+// (o, si ya estás editando, sale del modo edición). Se usa event delegation
+// sobre el <h1>, que nunca se destruye, aunque renderTitulo() cambie su
+// contenido entre imagen y texto.
 function updateEditToggle(){
-document.getElementById('brandLogo').classList.toggle('editing', editMode);
+document.getElementById('localNombre').classList.toggle('editing', editMode);
 }
 
-document.getElementById('brandLogo').addEventListener('click', () => {
+document.getElementById('localNombre').addEventListener('click', () => {
 if (!local) return;
 if (editMode){
 editMode = false; EDITOR_PIN = null;
