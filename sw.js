@@ -15,7 +15,7 @@
 // que estaba causando que los cambios tardaran en verse aunque subiéramos
 // de versión aquí).
 
-const CACHE_NAME = 'nexus-menu-v3';
+const CACHE_NAME = 'nexus-menu-v4';
 const APP_SHELL = [
   './index.html',
   './panel-menu.html',

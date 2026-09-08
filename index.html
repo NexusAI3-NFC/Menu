@@ -151,9 +151,25 @@ background:var(--ink); color:var(--paper-dim); font-family:var(--mono); font-siz
 width:100%; text-align:center; font-size:28px; letter-spacing:14px; font-family:var(--mono);
 background:var(--ink); border:1px solid var(--line); border-radius:12px; padding:14px; color:var(--paper);
 }
+
+/* Pantalla de bienvenida: se ve un instante nada más abrir el enlace (NFC/QR),
+reproduciendo el vídeo de animación del logo, y luego se desvanece para dejar
+ver el menú. Se queda un mínimo de tiempo en pantalla (ver JS), a la medida
+del vídeo, aunque los datos carguen muy rápido. */
+#splash{
+position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center;
+background:var(--ink); transition:opacity .5s ease, visibility .5s ease;
+}
+#splash.hide{ opacity:0; visibility:hidden; pointer-events:none; }
+#splashVideo{ width:100%; height:100%; object-fit:cover; }
+body.splash-lock{ overflow:hidden; }
 </style>
 </head>
 <body>
+
+<div id="splash">
+<video id="splashVideo" src="animacionsinmas.mp4" autoplay muted playsinline></video>
+</div>
 
 <header>
 <div class="brand">
@@ -217,6 +233,27 @@ let CARTAS = [];
 let PLATOS = [];
 let cartaViendoId = null;
 let editMode = false;
+
+// Tiempo mínimo (ms) que se ve la pantalla de bienvenida, para que el vídeo
+// de animación termine de reproducirse aunque el menú cargue muy rápido.
+const SPLASH_MIN_MS = 1400;
+const splashStart = Date.now();
+document.body.classList.add('splash-lock');
+
+function ocultarSplash(){
+const splash = document.getElementById('splash');
+if (!splash || splash.classList.contains('hide')) return;
+const transcurrido = Date.now() - splashStart;
+const esperar = Math.max(0, SPLASH_MIN_MS - transcurrido);
+setTimeout(() => {
+splash.classList.add('hide');
+document.body.classList.remove('splash-lock');
+setTimeout(() => splash.remove(), 550);
+}, esperar);
+}
+// Salvaguarda: si algo tarda demasiado (sin conexión, Supabase caído...) el
+// splash se quita igualmente para no dejar al cliente mirando una pantalla negra.
+setTimeout(ocultarSplash, 4000);
 
 function showModal(html){
 const overlay = document.createElement('div');
