@@ -156,9 +156,13 @@ background:var(--ink); border:1px solid var(--line); border-radius:12px; padding
 reproduciendo el vídeo de animación del logo, y luego se desvanece para dejar
 ver el menú. Se queda un mínimo de tiempo en pantalla (ver JS), a la medida
 del vídeo, aunque los datos carguen muy rápido. */
+/* El propio vídeo tiene el fondo pintado en blanco puro (no transparente), así
+que el fondo de esta pantalla usa exactamente ese mismo blanco (no var(--ink),
+que por defecto es oscuro hasta que carga el tema) — así el vídeo se funde
+con el fondo y no se ve ningún "cuadrado", solo la animación de las letras. */
 #splash{
 position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-content:center;
-background:var(--ink); transition:opacity .5s ease, visibility .5s ease;
+background:#FFFFFF; transition:opacity .5s ease, visibility .5s ease;
 }
 #splash.hide{ opacity:0; visibility:hidden; pointer-events:none; }
 /* clamp: nunca baja de 260px (móviles pequeños), crece con el ancho de
