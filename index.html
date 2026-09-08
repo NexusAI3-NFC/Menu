@@ -161,7 +161,10 @@ position:fixed; inset:0; z-index:300; display:flex; align-items:center; justify-
 background:var(--ink); transition:opacity .5s ease, visibility .5s ease;
 }
 #splash.hide{ opacity:0; visibility:hidden; pointer-events:none; }
-#splashVideo{ width:min(78vw, 420px); height:auto; max-height:70vh; object-fit:contain; }
+/* clamp: nunca baja de 260px (móviles pequeños), crece con el ancho de
+pantalla (45vw) en tablets/portátiles, y no pasa de 720px en monitores
+grandes de escritorio — así se ve grande en PC y se adapta en móvil. */
+#splashVideo{ width:clamp(260px, 45vw, 720px); height:auto; max-height:75vh; object-fit:contain; }
 body.splash-lock{ overflow:hidden; }
 </style>
 </head>
